@@ -5,12 +5,8 @@ import time
 import re
 
 # --- キーワード設定 ---
-# 本命：これが見つかれば最優先
 PRIMARY_GOAL_KEYWORDS = ["都市計画マスタープラン", "都市マスタープラン", "都市マスタ"]
-
-# 予備：本命が一つもない場合のみ、最終リストに加える
 SECONDARY_GOAL_KEYWORDS = ["総合計画", "立地適正化", "まちづくり計画", "施策"]
-
 PARENT_KEYWORDS = ["まちづくり", "都市計画", "景観"]
 EXCLUDE_TEXT_KEYWORDS = ["移転し", "移転しました", "閉鎖"]
 
@@ -19,8 +15,11 @@ def search(start_url: str, max_depth: int = 5):
     visited = set()
     to_crawl = []  # (url, depth, priority)
     
-    primary_found = []    # 本命リスト
-    secondary_found = []  # 予備リスト
+    primary_found = []
+    secondary_found = []
+
+    # ★追加：サイトマップで「都市計画」が見つかったかどうかのフラグ
+    urban_planning_in_sitemap = False
 
     start_url = start_url.rstrip("/") + "/"
     to_crawl.append((start_url, 0, 0))
@@ -35,6 +34,9 @@ def search(start_url: str, max_depth: int = 5):
         visited.add(current_url)
         print(f"  [探索中] {current_url}")
 
+        # ★追加：現在処理中のページがサイトマップかどうかを判定
+        is_sitemap_page = ("sitemap" in current_url.lower()) or ("サイトマップ" in current_url)
+
         try:
             r = requests.get(current_url, timeout=15)
             r.encoding = r.apparent_encoding
@@ -43,14 +45,12 @@ def search(start_url: str, max_depth: int = 5):
             for a in soup.find_all("a", href=True):
                 raw_text = a.get_text(strip=True)
                 
-                # 「移転し」除外
                 if any(ex in raw_text for ex in EXCLUDE_TEXT_KEYWORDS):
                     continue
 
                 href = a["href"]
                 full_url = urljoin(current_url, href)
                 
-                # マスタープラン系のアンカー(#)保持
                 if any(k in raw_text for k in PRIMARY_GOAL_KEYWORDS) or "#toshimasu" in full_url.lower():
                     pass 
                 else:
@@ -60,25 +60,33 @@ def search(start_url: str, max_depth: int = 5):
                     continue
 
                 new_priority = 0
-                
-                # 1. 本命キーワードの判定
+
+                # 1. 本命キーワード
                 if any(k in raw_text for k in PRIMARY_GOAL_KEYWORDS):
                     new_priority = 1000
                     if full_url not in [u[0] for u in primary_found]:
                         primary_found.append((full_url, raw_text))
                         print(f"    ⭐ 本命発見: {raw_text}")
 
-                # 2. 予備キーワード（総合計画など）の判定
+                # 2. 予備キーワード（総合計画など）
                 elif any(k in raw_text for k in SECONDARY_GOAL_KEYWORDS):
-                    new_priority = 100 # クロール優先度は低く設定
+                    # ★追加：サイトマップで「都市計画」が見つかっていたら予備を完全に無視
+                    if urban_planning_in_sitemap:
+                        continue  # クロール候補にも入れない
+                    new_priority = 100
                     if full_url not in [u[0] for u in secondary_found]:
                         secondary_found.append((full_url, raw_text))
 
-                # 3. サイトマップ・親カテゴリ（探索用）
+                # 3. サイトマップ・親カテゴリ
                 elif "sitemap" in full_url.lower() or "サイトマップ" in raw_text:
                     new_priority = 800
                 elif any(k in raw_text for k in PARENT_KEYWORDS):
                     new_priority = 500
+
+                    # ★追加：サイトマップページ内で「都市計画」があったらフラグを立てる
+                    if is_sitemap_page and "都市計画" in raw_text:
+                        urban_planning_in_sitemap = True
+                        print("    🚩 サイトマップ内で「都市計画」発見 → 予備キーワードの探索を抑制します")
 
                 # クロール候補に追加
                 if new_priority > 0 and full_url not in visited:
@@ -86,12 +94,11 @@ def search(start_url: str, max_depth: int = 5):
                         to_crawl.append((full_url, depth + 1, new_priority))
 
             time.sleep(0.5)
-        except:
+        except Exception as e:
+            print(f"    エラー: {e}")
             continue
 
-    # --- 最終リストの作成ロジック ---
-    # 本命が1つでもあれば、本命のみを返す。
-    # 本命が0件の場合のみ、予備（総合計画など）を返す。
+    # 最終リスト（従来通り）
     if primary_found:
         print("\n✅ 本命（マスタープラン等）が見つかったため、予備は除外しました。")
         results = [u[0] for u in primary_found]
@@ -102,7 +109,8 @@ def search(start_url: str, max_depth: int = 5):
     return results
 
 if __name__ == "__main__":
-    target = "https://www.info.city.tsu.mie.jp/www/sitemap/index.html"
+    target = "https://www.info.city.tsu.mie.jp/www/sitemap/index.html"  # 例: サイトマップからスタートする場合
+    # target = "https://www.city.example.jp/"  # トップページからスタートする場合も可
     final_urls = search(target)
     
     print("\n--- 最終結果 ---")

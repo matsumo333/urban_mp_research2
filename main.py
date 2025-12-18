@@ -1,5 +1,6 @@
 import re
-from tkinter import Tk, messagebox
+import tkinter as tk
+from tkinter import Tk, messagebox, Label
 
 from municipality_selector_gui import select_municipality
 from municipality_detector import detect_municipality_name
@@ -91,17 +92,32 @@ def run_once():
     print(f"✅ 使用する自治体名: {city}")
 
     # ----------------------------------
-    # 検索方式の決定（sitemapを最優先に！）
+    # ★ 「検索中」画面の表示
     # ----------------------------------
-    base_strategies = detect_search_strategy_candidates(url)
+    loading_win = tk.Toplevel(root)
+    loading_win.title("実行中")
+    loading_win.geometry("600x180+500+350")
+    loading_win.attributes("-topmost", True)
+    loading_win.configure(bg="#f0f0f0")
 
-    # sitemapを常に先頭に配置（存在しなくても強制追加して優先）
-    strategies = ["sitemap"]
-    for strat in base_strategies:
-        if strat != "sitemap":
+    Label(loading_win, text=f"{city}を検索", font=("MS Gothic", 14, "bold"), bg="#f0f0f0").pack(pady=(20, 5))
+    status_label = Label(loading_win, text="データ検索中\n１０分くらいかかる場合があります。", font=("MS Gothic", 13), bg="#f0f0f0")
+    status_label.pack(pady=10)
+
+    # 画面を強制描画
+    loading_win.update()
+
+    # ----------------------------------
+    # 検索方式の決定（指定された優先順に固定）
+    # ----------------------------------
+    # 1. internal_search -> 2. google_cse -> 3. sitemap -> 4. hierarchical_entry
+    strategies = ["hierarchical_entry","internal_search", "google_cse", "sitemap" ]
+    
+    # 5. それ以外の検出された方式を末尾に追加
+    base_detected = detect_search_strategy_candidates(url)
+    for strat in base_detected:
+        if strat not in strategies:
             strategies.append(strat)
-
-    print(f"🔍 検索方式候補（sitemap最優先）: {strategies}")
 
     final_links = []
     used_strategy = None
@@ -111,13 +127,17 @@ def run_once():
     # ==============================
     for strategy in strategies:
         print(f"▶ 検索方式を試行中: {strategy}")
+        
+        # UIを更新
+        status_label.config(text=f"「{strategy}」で検索中...\nしばらくお待ちください\n５分くらいかかる場合があります。")
+        loading_win.update()
 
         func = SEARCH_FUNCS.get(strategy)
         if not func:
             continue
 
         try:
-            # 1. 検索実行
+            # 1. 検索実行（1回目）
             if strategy in ("google_cse", "internal_search"):
                 result = func(start_url=url, max_pages=MAX_PAGES)
             else:
@@ -130,21 +150,21 @@ def run_once():
                 else:
                     current_links = extract_links(result)
                 
-                # リンクが1件以上 → 即採用して終了
                 if current_links:
                     final_links = current_links
                     used_strategy = strategy
-                    print(f"  ✅ {strategy} で関連リンク {len(current_links)}件 発見 → 採用確定")
+                    print(f"  ✅ {strategy} でリンク発見")
                     break
-                else:
-                    print(f"  ⚠ {strategy} では関連リンクが0件でした。次の方式を試します。")
-
+        
         except Exception as e:
             print(f"⚠ {strategy} でエラー発生: {e}")
+            loading_win.attributes("-topmost", False) # ポップアップを出しやすく
             wait_for_manual_robot_action(strategy)
+            loading_win.attributes("-topmost", True)
 
             try:
                 print("🔁 手動操作後に再試行します")
+                loading_win.update()
                 if strategy in ("google_cse", "internal_search"):
                     result = func(start_url=url, max_pages=MAX_PAGES)
                 else:
@@ -159,19 +179,15 @@ def run_once():
                     if current_links:
                         final_links = current_links
                         used_strategy = strategy
-                        print(f"  ✅ 再試行成功！ {strategy} で {len(current_links)}件 発見 → 採用")
                         break
             except Exception as e2:
                 print(f"❌ 再試行失敗: {e2}")
 
+    # 採用方式がない場合
     if not used_strategy:
-        messagebox.showerror(
-            "エラー",
-            "有効な検索方式が見つかりませんでした（すべての方式で関連リンク0件）"
-        )
+        loading_win.destroy()
+        messagebox.showerror("エラー", "有効な検索方式が見つかりませんでした")
         return True
-
-    print(f"✅ 最終採用検索方式: {used_strategy} (リンク {len(final_links)}件)")
 
     # ----------------------------------
     # リンク保存
@@ -182,9 +198,14 @@ def run_once():
     # PDF探索（深く再帰検索）
     # ----------------------------------
     records = []
+    total = len(final_links)
+    for i, (title, link) in enumerate(final_links):
+        # UI進捗更新
+        status_label.config(text=f"PDFを探索中 ({i+1}/{total})\n解析中: {link[:30]}...")
+        loading_win.update()
 
-    for title, link in final_links:
         try:
+            # 元の判定ロジックを保持
             depth = 1 if link.lower().endswith(".pdf") else 4
             found = find_pdfs_recursively(
                 start_url=link,
@@ -196,11 +217,11 @@ def run_once():
         except Exception as e:
             print(f"⚠ PDF探索エラー ({link}): {e}")
 
+    # 完了
+    loading_win.destroy()
+
     if not records:
-        messagebox.showwarning(
-            "警告",
-            "関連するPDFが見つかりませんでした"
-        )
+        messagebox.showwarning("警告", "関連するPDFが見つかりませんでした")
         return True
 
     save_results(records)
@@ -218,7 +239,6 @@ def run_once():
 # ==============================
 def main():
     global root
-
     root = Tk()
     root.withdraw()
 
@@ -229,10 +249,8 @@ def main():
 
         answer = messagebox.askyesno(
             "完了",
-            "PDFの処理が完了しました。\n\n"
-            "別の自治体を続けて検索しますか？"
+            "PDFの処理が完了しました。\n\n別の自治体を続けて検索しますか？"
         )
-
         if not answer:
             break
 
