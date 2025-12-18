@@ -1,10 +1,7 @@
-# main.py
-
 import re
 from tkinter import Tk, messagebox
 
 from municipality_selector_gui import select_municipality
-
 from municipality_detector import detect_municipality_name
 from search_strategy_detector import detect_search_strategy_candidates
 
@@ -13,6 +10,7 @@ from search_types.internal_search import search as internal_search
 from search_types.topical_entry import search as topical_entry_search
 from search_types.hierarchical_entry import search as hierarchical_entry_search
 from search_types.fallback import search as fallback_search
+from search_types.sitemap import search as sitemap
 
 from link_extractor import extract_links, save_links_csv
 from deep_pdf_finder import find_pdfs_recursively
@@ -32,9 +30,11 @@ SEARCH_FUNCS = {
     "topical_entry": topical_entry_search,
     "hierarchical_entry": hierarchical_entry_search,
     "fallback": fallback_search,
+    "sitemap": sitemap,
 }
 
 root = None  # Tkインスタンス
+
 
 # ==========================================
 # ロボット判定時の手動待機（ポップアップ）
@@ -86,18 +86,24 @@ def run_once():
 
     # ----------------------------------
     # 自治体名の確定
-    # （GUI選択を最優先）
     # ----------------------------------
     city = municipality or detect_municipality_name(url)
     print(f"✅ 使用する自治体名: {city}")
 
     # ----------------------------------
-    # 検索方式の決定
+    # 検索方式の決定（sitemapを最優先に！）
     # ----------------------------------
-    strategies = detect_search_strategy_candidates(url)
-    print(f"🔍 検索方式候補: {strategies}")
+    base_strategies = detect_search_strategy_candidates(url)
 
-    result = None
+    # sitemapを常に先頭に配置（存在しなくても強制追加して優先）
+    strategies = ["sitemap"]
+    for strat in base_strategies:
+        if strat != "sitemap":
+            strategies.append(strat)
+
+    print(f"🔍 検索方式候補（sitemap最優先）: {strategies}")
+
+    final_links = []
     used_strategy = None
 
     # ==============================
@@ -106,22 +112,35 @@ def run_once():
     for strategy in strategies:
         print(f"▶ 検索方式を試行中: {strategy}")
 
-        func = SEARCH_FUNCS[strategy]
+        func = SEARCH_FUNCS.get(strategy)
+        if not func:
+            continue
 
         try:
+            # 1. 検索実行
             if strategy in ("google_cse", "internal_search"):
                 result = func(start_url=url, max_pages=MAX_PAGES)
             else:
                 result = func(start_url=url)
 
+            # 2. リンク抽出
             if result:
-                used_strategy = strategy
-                break
+                if strategy in ("topical_entry", "hierarchical_entry", "sitemap"):
+                    current_links = [(u, u) for u in result]
+                else:
+                    current_links = extract_links(result)
+                
+                # リンクが1件以上 → 即採用して終了
+                if current_links:
+                    final_links = current_links
+                    used_strategy = strategy
+                    print(f"  ✅ {strategy} で関連リンク {len(current_links)}件 発見 → 採用確定")
+                    break
+                else:
+                    print(f"  ⚠ {strategy} では関連リンクが0件でした。次の方式を試します。")
 
         except Exception as e:
             print(f"⚠ {strategy} でエラー発生: {e}")
-
-            # ★ ロボット判定時は手動対応ポップアップ
             wait_for_manual_robot_action(strategy)
 
             try:
@@ -132,44 +151,39 @@ def run_once():
                     result = func(start_url=url)
 
                 if result:
-                    used_strategy = strategy
-                    break
-
+                    if strategy in ("topical_entry", "hierarchical_entry", "sitemap"):
+                        current_links = [(u, u) for u in result]
+                    else:
+                        current_links = extract_links(result)
+                    
+                    if current_links:
+                        final_links = current_links
+                        used_strategy = strategy
+                        print(f"  ✅ 再試行成功！ {strategy} で {len(current_links)}件 発見 → 採用")
+                        break
             except Exception as e2:
                 print(f"❌ 再試行失敗: {e2}")
 
     if not used_strategy:
         messagebox.showerror(
             "エラー",
-            "有効な検索方式が見つかりませんでした"
+            "有効な検索方式が見つかりませんでした（すべての方式で関連リンク0件）"
         )
         return True
 
-    print(f"✅ 使用した検索方式: {used_strategy}")
+    print(f"✅ 最終採用検索方式: {used_strategy} (リンク {len(final_links)}件)")
 
     # ----------------------------------
-    # リンク抽出
+    # リンク保存
     # ----------------------------------
-    if used_strategy in ("topical_entry", "hierarchical_entry"):
-        links = [(u, u) for u in result]
-    else:
-        links = extract_links(result)
-
-    if not links:
-        messagebox.showwarning(
-            "警告",
-            "関連リンクが見つかりませんでした"
-        )
-        return True
-
-    save_links_csv(links, LINKS_CSV)
+    save_links_csv(final_links, LINKS_CSV)
 
     # ----------------------------------
-    # PDF探索
+    # PDF探索（深く再帰検索）
     # ----------------------------------
     records = []
 
-    for title, link in links:
+    for title, link in final_links:
         try:
             depth = 1 if link.lower().endswith(".pdf") else 4
             found = find_pdfs_recursively(
@@ -192,7 +206,7 @@ def run_once():
     save_results(records)
 
     # ----------------------------------
-    # PDF選択・結合
+    # PDF選択・結合GUI
     # ----------------------------------
     show_pdf_selector()
 
@@ -206,11 +220,10 @@ def main():
     global root
 
     root = Tk()
-    root.withdraw()  # メインウィンドウは非表示
+    root.withdraw()
 
     while True:
         cont = run_once()
-
         if not cont:
             break
 
