@@ -1,6 +1,7 @@
 import re
 import tkinter as tk
 from tkinter import Tk, messagebox, Label
+import os
 
 from municipality_selector_gui import select_municipality
 from municipality_detector import detect_municipality_name
@@ -12,6 +13,7 @@ from search_types.topical_entry import search as topical_entry_search
 from search_types.hierarchical_entry import search as hierarchical_entry_search
 from search_types.fallback import search as fallback_search
 from search_types.sitemap import search as sitemap
+from search_types.google_broad_search import search as google_broad_search  # 追加
 
 from link_extractor import extract_links, save_links_csv
 from deep_pdf_finder import find_pdfs_recursively
@@ -32,6 +34,7 @@ SEARCH_FUNCS = {
     "hierarchical_entry": hierarchical_entry_search,
     "fallback": fallback_search,
     "sitemap": sitemap,
+    "google_broad": google_broad_search,
 }
 
 root = None  # Tkインスタンス
@@ -41,13 +44,13 @@ root = None  # Tkインスタンス
 # ロボット判定時の手動待機（ポップアップ）
 # ==========================================
 def wait_for_manual_robot_action(strategy: str):
-    messagebox.showinfo(
-        "手動操作が必要です",
-        f"検索方式「{strategy}」でロボット判定が出た可能性があります。\n\n"
-        "・ブラウザ画面を確認してください\n"
-        "・「私はロボットではありません」等を手動で操作してください\n\n"
-        "完了したら OK を押すと検索を再開します。"
-    )
+    # messagebox.showinfo(
+    #     "手動操作が必要です",
+    #     f"検索方式「{strategy}」でロボット判定が出た可能性があります。\n\n"
+    #     "・ブラウザ画面を確認してください\n"
+    #     "・「私はロボットではありません」等を手動で操作してください\n\n"
+    #     "完了したら OK を押すと検索を再開します。"
+    # )
 
 
 # ==========================================
@@ -104,19 +107,16 @@ def run_once():
     status_label = Label(loading_win, text="データ検索中\n１０分くらいかかる場合があります。", font=("MS Gothic", 13), bg="#f0f0f0")
     status_label.pack(pady=10)
 
-    # 画面を強制描画
     loading_win.update()
 
     # ----------------------------------
-    # 検索方式の決定（指定された優先順に固定）
+    # 検索方式の決定（優先順位固定）
     # ----------------------------------
-    # 1. internal_search -> 2. google_cse -> 3. sitemap -> 4. hierarchical_entry
-    strategies = ["hierarchical_entry","internal_search", "google_cse", "sitemap" ]
+    strategies = ["hierarchical_entry", "internal_search", "google_cse", "sitemap"]
     
-    # 5. それ以外の検出された方式を末尾に追加
     base_detected = detect_search_strategy_candidates(url)
     for strat in base_detected:
-        if strat not in strategies:
+        if strat not in strategies and strat in SEARCH_FUNCS:
             strategies.append(strat)
 
     final_links = []
@@ -126,9 +126,11 @@ def run_once():
     # 検索方式を順番に試行
     # ==============================
     for strategy in strategies:
+        if strategy == "google_broad":
+            continue
+
         print(f"▶ 検索方式を試行中: {strategy}")
         
-        # UIを更新
         status_label.config(text=f"「{strategy}」で検索中...\nしばらくお待ちください\n５分くらいかかる場合があります。")
         loading_win.update()
 
@@ -137,13 +139,11 @@ def run_once():
             continue
 
         try:
-            # 1. 検索実行（1回目）
             if strategy in ("google_cse", "internal_search"):
                 result = func(start_url=url, max_pages=MAX_PAGES)
             else:
                 result = func(start_url=url)
 
-            # 2. リンク抽出
             if result:
                 if strategy in ("topical_entry", "hierarchical_entry", "sitemap"):
                     current_links = [(u, u) for u in result]
@@ -158,7 +158,7 @@ def run_once():
         
         except Exception as e:
             print(f"⚠ {strategy} でエラー発生: {e}")
-            loading_win.attributes("-topmost", False) # ポップアップを出しやすく
+            loading_win.attributes("-topmost", False)
             wait_for_manual_robot_action(strategy)
             loading_win.attributes("-topmost", True)
 
@@ -183,7 +183,6 @@ def run_once():
             except Exception as e2:
                 print(f"❌ 再試行失敗: {e2}")
 
-    # 採用方式がない場合
     if not used_strategy:
         loading_win.destroy()
         messagebox.showerror("エラー", "有効な検索方式が見つかりませんでした")
@@ -200,12 +199,10 @@ def run_once():
     records = []
     total = len(final_links)
     for i, (title, link) in enumerate(final_links):
-        # UI進捗更新
-        status_label.config(text=f"PDFを探索中 ({i+1}/{total})\n解析中: {link[:30]}...")
+        status_label.config(text=f"PDFを探索中 ({i+1}/{total})\n解析中: {link[:40]}...")
         loading_win.update()
 
         try:
-            # 元の判定ロジックを保持
             depth = 1 if link.lower().endswith(".pdf") else 4
             found = find_pdfs_recursively(
                 start_url=link,
@@ -217,18 +214,85 @@ def run_once():
         except Exception as e:
             print(f"⚠ PDF探索エラー ({link}): {e}")
 
-    # 完了
+    # ----------------------------------
+    # ★ PDFが0件 → Google広域検索実行
+    # ----------------------------------
+    if not records:
+        print(f"\n🔍 既存方式でPDFが見つかりませんでした。Google広域検索を追加実行します: {city}")
+
+        # status_label.config(
+        #     text=f"Google広域検索を実行中...\n"
+        #          f"{city} の「都市計画 マスタープラン」を検索中\n"
+        #          f"ブラウザが開きます。ロボット認証が出たら手動で対応してください（30秒待機）"
+        # )
+        loading_win.update()
+
+        additional_records = []
+
+        try:
+            broad_results = google_broad_search(city)
+
+            if broad_results:
+                print(f"✅ Google広域検索で {len(broad_results)}件の関連ページを発見")
+
+                status_label.config(text="Googleで見つかったページからPDFを探索中...\n（少し時間がかかる場合があります）")
+                loading_win.update()
+
+                for idx, (b_title, b_link) in enumerate(broad_results):
+                    status_label.config(
+                        text=f"Google結果を解析中 ({idx+1}/{len(broad_results)})\n"
+                             f"{b_title[:50]}..."
+                    )
+                    loading_win.update()
+
+                    try:
+                        if b_link.lower().endswith(".pdf"):
+                            additional_records.append({
+                                "title": b_title or os.path.basename(b_link),
+                                "url": b_link,
+                                "source": "google_broad_direct",
+                                "depth": 0
+                            })
+                        else:
+                            found = find_pdfs_recursively(
+                                start_url=b_link,
+                                city=city,
+                                max_depth=3
+                            )
+                            additional_records.extend(found)
+                    except Exception as e:
+                        print(f"⚠ Google結果の個別探索エラー ({b_link}): {e}")
+
+                records.extend(additional_records)
+                print(f"✅ Google広域検索経由で追加 {len(additional_records)}件発見")
+
+        except Exception as e:
+            print(f"⚠ Google広域検索実行中にエラー: {e}")
+
+        finally:
+            if records:
+                status_label.config(text="PDF発見完了！結果を保存中...")
+            else:
+                status_label.config(text="すべての検索を試しましたが、PDFが見つかりませんでした")
+            loading_win.update()
+
+    # ----------------------------------
+    # 最終完了処理
+    # ----------------------------------
     loading_win.destroy()
 
     if not records:
-        messagebox.showwarning("警告", "関連するPDFが見つかりませんでした")
+        messagebox.showwarning(
+            "警告",
+            "関連するPDFが見つかりませんでした。\n\n"
+            "・自治体サイトの構造が特殊である\n"
+            "・都市計画マスタープランが未公開である\n"
+            "・検索キーワードに該当しない\n"
+            "などの可能性があります。"
+        )
         return True
 
     save_results(records)
-
-    # ----------------------------------
-    # PDF選択・結合GUI
-    # ----------------------------------
     show_pdf_selector()
 
     return True
