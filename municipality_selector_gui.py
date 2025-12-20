@@ -31,11 +31,7 @@ def select_municipality(parent):
     # 都道府県
     # -------------------------
     tk.Label(dialog, text="都道府県を選択").pack(pady=6)
-    pref_combo = ttk.Combobox(
-        dialog,
-        values=sorted(data.keys()),
-        state="readonly"
-    )
+    pref_combo = ttk.Combobox(dialog, values=sorted(data.keys()), state="readonly")
     pref_combo.pack(fill="x", padx=20)
 
     # -------------------------
@@ -71,7 +67,7 @@ def select_municipality(parent):
                 dialog.destroy()
                 return
 
-    ttk.Button(dialog, text="決定", command=decide).pack(pady=16)
+    ttk.Button(dialog, text="決 定", command=decide).pack(pady=16)
 
     parent.wait_window(dialog)
     return result

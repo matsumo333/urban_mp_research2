@@ -64,7 +64,7 @@ def search(city_name: str) -> list[tuple[str, str]]:
         print("   30秒後に自動で結果を収集します...\n")
 
         driver.get(search_url)
-        time.sleep(30)  # 手動対応用待機
+        time.sleep(6000)  # 手動対応用待機
 
         print("🔄 検索結果を解析中...")
 

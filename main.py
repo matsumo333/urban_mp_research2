@@ -80,7 +80,7 @@ def run_once():
     # ----------------------------------
     loading_win = tk.Toplevel(root)
     loading_win.title("実行中")
-    loading_win.geometry("600x180+500+350")
+    loading_win.geometry("600x180+800+150")
     loading_win.attributes("-topmost", True)
 
     Label(loading_win, text=f"{city}を検索", font=("MS Gothic", 14, "bold")).pack(
