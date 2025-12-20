@@ -1,9 +1,18 @@
 ﻿city,title,type,url,local_path,source,depth,status
-大船渡市,大船渡都市計画マスタープラン[PDFファイル],PDF,https://www.city.ofunato.iwate.jp/uploads/contents/archive_0000000259_00/8379.pdf,output/pdfs\大船渡市_8379.pdf,https://www.city.ofunato.iwate.jp/archive/contents-2157/,2,SKIP_EXISTS
-大船渡市,大船渡都市計画マスタープラン（概要版）[PDFファイル],PDF,https://www.city.ofunato.iwate.jp/uploads/contents/archive_0000000259_00/8380.pdf,output/pdfs\大船渡市_8380.pdf,https://www.city.ofunato.iwate.jp/archive/contents-2157/,2,SKIP_EXISTS
-大船渡市,大船渡都市計画マスタープラン[PDFファイル],PDF,https://www.city.ofunato.iwate.jp/uploads/contents/archive_0000000259_00/8379.pdf,output/pdfs\大船渡市_8379.pdf,https://www.city.ofunato.iwate.jp/archive/contents-2157,1,SKIP_EXISTS
-大船渡市,大船渡都市計画マスタープラン（概要版）[PDFファイル],PDF,https://www.city.ofunato.iwate.jp/uploads/contents/archive_0000000259_00/8380.pdf,output/pdfs\大船渡市_8380.pdf,https://www.city.ofunato.iwate.jp/archive/contents-2157,1,SKIP_EXISTS
-大船渡市,大船渡都市計画マスタープラン[PDFファイル],PDF,https://www.city.ofunato.iwate.jp/uploads/contents/archive_0000000259_00/8379.pdf,output/pdfs\大船渡市_8379.pdf,https://www.city.ofunato.iwate.jp/archive/contents-2157/,2,SKIP_EXISTS
-大船渡市,大船渡都市計画マスタープラン（概要版）[PDFファイル],PDF,https://www.city.ofunato.iwate.jp/uploads/contents/archive_0000000259_00/8380.pdf,output/pdfs\大船渡市_8380.pdf,https://www.city.ofunato.iwate.jp/archive/contents-2157/,2,SKIP_EXISTS
-大船渡市,大船渡都市計画マスタープラン[PDFファイル],PDF,https://www.city.ofunato.iwate.jp/uploads/contents/archive_0000000259_00/8379.pdf,output/pdfs\大船渡市_8379.pdf,https://www.city.ofunato.iwate.jp/archive/contents-2157,1,SKIP_EXISTS
-大船渡市,大船渡都市計画マスタープラン（概要版）[PDFファイル],PDF,https://www.city.ofunato.iwate.jp/uploads/contents/archive_0000000259_00/8380.pdf,output/pdfs\大船渡市_8380.pdf,https://www.city.ofunato.iwate.jp/archive/contents-2157,1,SKIP_EXISTS
+大垣市,【概要版】大垣市都市計画マスタープラン,PDF,https://www.city.ogaki.lg.jp/cmsfiles/contents/0000053/53056/gaiyoR3.pdf,output/pdfs\大垣市_gaiyoR3.pdf,https://www.city.ogaki.lg.jp/0000053056.html,0,SKIP_EXISTS
+大垣市,表紙・目次,PDF,https://www.city.ogaki.lg.jp/cmsfiles/contents/0000053/53056/00hyousimokuziR3.pdf,output/pdfs\大垣市_00hyousimokuziR3.pdf,https://www.city.ogaki.lg.jp/0000053056.html,0,SKIP_EXISTS
+大垣市,【第1章】計画の大綱,PDF,https://www.city.ogaki.lg.jp/cmsfiles/contents/0000053/53056/01daiichiR3.pdf,output/pdfs\大垣市_01daiichiR3.pdf,https://www.city.ogaki.lg.jp/0000053056.html,0,SKIP_EXISTS
+大垣市,【第2章】計画区域の特徴と都市づくりの主要課題,PDF,https://www.city.ogaki.lg.jp/cmsfiles/contents/0000053/53056/02dainiR3.pdf,output/pdfs\大垣市_02dainiR3.pdf,https://www.city.ogaki.lg.jp/0000053056.html,0,SKIP_EXISTS
+大垣市,【第3章】全体構想,PDF,https://www.city.ogaki.lg.jp/cmsfiles/contents/0000053/53056/03daisanR3.pdf,output/pdfs\大垣市_03daisanR3.pdf,https://www.city.ogaki.lg.jp/0000053056.html,0,SKIP_EXISTS
+大垣市,【第4章】地域別構想,PDF,https://www.city.ogaki.lg.jp/cmsfiles/contents/0000053/53056/04daiyonR3.pdf,output/pdfs\大垣市_04daiyonR3.pdf,https://www.city.ogaki.lg.jp/0000053056.html,0,SKIP_EXISTS
+大垣市,用語解説,PDF,https://www.city.ogaki.lg.jp/cmsfiles/contents/0000053/53056/05yougokaisetuR3.pdf,output/pdfs\大垣市_05yougokaisetuR3.pdf,https://www.city.ogaki.lg.jp/0000053056.html,0,SKIP_EXISTS
+大垣市,大垣都市計画区域マスタープラン（本文）,PDF,https://www.city.ogaki.lg.jp/cmsfiles/contents/0000002/2344/R3KMP.pdf,output/pdfs\大垣市_R3KMP.pdf,https://www.city.ogaki.lg.jp/0000002344.html,2,SKIP_EXISTS
+大垣市,大垣都市計画区域マスタープラン（総括図）,PDF,https://www.city.ogaki.lg.jp/cmsfiles/contents/0000002/2344/R3KMPsoukatuzu.pdf,output/pdfs\大垣市_R3KMPsoukatuzu.pdf,https://www.city.ogaki.lg.jp/0000002344.html,2,SKIP_EXISTS
+大垣市,土地区画整理事業一覧,PDF,https://www.city.ogaki.lg.jp/cmsfiles/contents/0000002/2344/tochikukakuseirijigyou-ichiran.pdf,output/pdfs\大垣市_tochikukakuseirijigyou-ichiran.pdf,https://www.city.ogaki.lg.jp/0000002344.html,2,SKIP_EXISTS
+大垣市,資料（令和6年4月26日付け）,PDF,https://www.city.ogaki.lg.jp/cmsfiles/contents/0000002/2889/toshikeikakuzyouhounotuika.pdf,output/pdfs\大垣市_toshikeikakuzyouhounotuika.pdf,https://www.city.ogaki.lg.jp/0000002889.html,3,SKIP_EXISTS
+大垣市,"【大垣・墨俣】15,000分の1の総括図 (ファイルサイズ：6.93MB)",PDF,https://www.city.ogaki.lg.jp/cmsfiles/contents/0000002/2889/soukatsuzu_15000.pdf,output/pdfs\大垣市_soukatsuzu_15000.pdf,https://www.city.ogaki.lg.jp/0000002889.html,3,SKIP_EXISTS
+大垣市,"【墨俣】10,000分の1総括図 (ファイルサイズ：3.48MB)",PDF,https://www.city.ogaki.lg.jp/cmsfiles/contents/0000002/2889/soukatsuzu(sunomata)_10000.pdf,output/pdfs\大垣市_soukatsuzu(sunomata)_10000.pdf,https://www.city.ogaki.lg.jp/0000002889.html,3,SKIP_EXISTS
+大垣市,"縮尺2,500分の1索引図 (ファイル名:索引図.pdf  サイズ:3.11 MB)",PDF,https://www.city.ogaki.lg.jp/cmsfiles/contents/0000002/2306/H25sakuin.pdf,output/pdfs\大垣市_H25sakuin.pdf,https://www.city.ogaki.lg.jp/0000002306.html,4,SKIP_EXISTS
+大垣市,(ファイル名：minaoshi.pdf  サイズ：9.49MB),PDF,https://www.city.ogaki.lg.jp/cmsfiles/contents/0000034/34889/minaoshi.pdf,output/pdfs\大垣市_minaoshi.pdf,https://www.city.ogaki.lg.jp/0000034889.html,4,SKIP_EXISTS
+大垣市,(ファイル名：kekka.pdf  サイズ：4.55MB),PDF,https://www.city.ogaki.lg.jp/cmsfiles/contents/0000034/34889/kekka.pdf,output/pdfs\大垣市_kekka.pdf,https://www.city.ogaki.lg.jp/0000034889.html,4,SKIP_EXISTS
+大垣市,国土交通省 都市再生推進法人について(外部リンク)（別ウインドウで開く）,PDF,https://www.mlit.go.jp/toshi/pdf/toshisaisei/toshisaisei_shousai.pdf,output/pdfs\大垣市_toshisaisei_shousai.pdf,https://www.city.ogaki.lg.jp/0000061772.html,3,OK

@@ -1,7 +1,39 @@
+# ==========================================
+# 利用期限チェック（起動時1回）
+# ==========================================
+from datetime import datetime
+import sys
+import tkinter as tk
+from tkinter import messagebox
+
+EXPIRE_DATE = "2026-1-31"  # 利用期限（YYYY-MM-DD）
+
+
+def check_expire():
+    today = datetime.now().date()
+    expire = datetime.strptime(EXPIRE_DATE, "%Y-%m-%d").date()
+
+    if today > expire:
+        root = tk.Tk()
+        root.withdraw()
+        messagebox.showerror(
+            "利用期限切れ",
+            f"このプログラムの利用期限は {EXPIRE_DATE} までです。\n"
+            "期限を過ぎたため実行できません。",
+        )
+        root.destroy()
+        sys.exit(0)
+
+
+check_expire()
+
+# ==========================================
+# 通常処理 imports
+# ==========================================
 import re
 import os
 import tkinter as tk
-from tkinter import Tk, messagebox, Label
+from tkinter import Tk, Label
 
 from municipality_selector_gui import select_municipality
 from municipality_detector import detect_municipality_name
@@ -38,7 +70,7 @@ root = None
 
 
 # ==========================================
-# PDF初期化（1自治体につき1回だけ）
+# PDF初期化（1自治体につき1回）
 # ==========================================
 def clear_pdf_files():
     os.makedirs(PDF_DIR, exist_ok=True)
@@ -51,13 +83,12 @@ def clear_pdf_files():
 
 
 # ==========================================
-# 一時メッセージ表示（3秒）
-# フォント・位置・サイズ調整可能
+# 一時メッセージ（3秒で自動消去）
 # ==========================================
 def show_temp_message(parent, text, seconds=3):
     win = tk.Toplevel(parent)
     win.title("お知らせ")
-    win.geometry("520x160+840+360")  # ← 位置調整
+    win.geometry("520x160+840+360")
     win.attributes("-topmost", True)
 
     frame = tk.Frame(win, bd=2, relief="groove")
@@ -66,19 +97,17 @@ def show_temp_message(parent, text, seconds=3):
     Label(
         frame,
         text=text,
-        font=("MS Gothic", 12),  # ← フォントサイズ変更可
+        font=("MS Gothic", 12),
         justify="center",
     ).pack(expand=True)
 
     win.after(seconds * 1000, win.destroy)
-    win.update()
 
 
 # ==========================================
 # Google広域検索（フォールバック専用）
 # ==========================================
 def run_google_broad(city, loading, status):
-    # 一時メッセージ表示
     show_temp_message(
         root,
         "Google検索を実行します。\n"
@@ -86,11 +115,6 @@ def run_google_broad(city, loading, status):
         "手動で解除してください。",
         seconds=3,
     )
-
-    # 🔑 ここが重要：3秒間 Tk のイベントを回す
-    root.update()
-    root.after(3000)  # ← 実際に3秒待つ
-    root.update()
 
     status.config(text="Google広域検索中…")
     loading.update()
@@ -162,7 +186,7 @@ def run_once():
     loading.update()
 
     # ==================================
-    # 通常検索（自動）
+    # 通常検索
     # ==================================
     strategies = ["hierarchical_entry", "internal_search", "google_cse", "sitemap"]
     detected = detect_search_strategy_candidates(url)
@@ -214,7 +238,7 @@ def run_once():
             print(f"⚠ {strategy} エラー: {e}")
 
     # ==================================
-    # フォールバック：Google広域検索
+    # フォールバック
     # ==================================
     records = []
 
@@ -235,7 +259,7 @@ def run_once():
     loading.destroy()
 
     if not records:
-        messagebox.showwarning("もう一度、右側のgPDFが見つかりませんでした")
+        messagebox.showwarning("警告", "PDFが見つかりませんでした")
         return True
 
     save_results(records)
