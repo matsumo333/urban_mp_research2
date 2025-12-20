@@ -1,7 +1,7 @@
 import re
+import os
 import tkinter as tk
 from tkinter import Tk, messagebox, Label
-import os
 
 from municipality_selector_gui import select_municipality
 from municipality_detector import detect_municipality_name
@@ -20,32 +20,103 @@ from deep_pdf_finder import find_pdfs_recursively
 from result_collector import save_results
 from pdf_selector_gui import show_pdf_selector
 
-
 # ==========================================
 # 設定
 # ==========================================
 MAX_PAGES = 5
 LINKS_CSV = r"C:\Users\matsu\Desktop\python\urban_mp_research\output\links.csv"
+PDF_DIR = "output/pdfs"
 
 SEARCH_FUNCS = {
-    "google_cse": google_cse_search,
-    "internal_search": internal_search,
-    "topical_entry": topical_entry_search,
     "hierarchical_entry": hierarchical_entry_search,
-    "fallback": fallback_search,
+    "internal_search": internal_search,
+    "google_cse": google_cse_search,
     "sitemap": sitemap,
-    "google_broad": google_broad_search,
 }
 
-root = None  # Tkインスタンス
+root = None
 
 
 # ==========================================
-# ロボット判定時の手動待機
+# PDF初期化（1自治体につき1回だけ）
 # ==========================================
-def wait_for_manual_robot_action(strategy: str):
-    pass
-    # 必要なら messagebox を復活可能
+def clear_pdf_files():
+    os.makedirs(PDF_DIR, exist_ok=True)
+    for f in os.listdir(PDF_DIR):
+        if f.lower().endswith(".pdf"):
+            try:
+                os.remove(os.path.join(PDF_DIR, f))
+            except Exception as e:
+                print(f"⚠️ 削除失敗: {f} ({e})")
+
+
+# ==========================================
+# 一時メッセージ表示（3秒）
+# フォント・位置・サイズ調整可能
+# ==========================================
+def show_temp_message(parent, text, seconds=3):
+    win = tk.Toplevel(parent)
+    win.title("お知らせ")
+    win.geometry("520x160+840+360")  # ← 位置調整
+    win.attributes("-topmost", True)
+
+    frame = tk.Frame(win, bd=2, relief="groove")
+    frame.pack(expand=True, fill="both", padx=12, pady=12)
+
+    Label(
+        frame,
+        text=text,
+        font=("MS Gothic", 12),  # ← フォントサイズ変更可
+        justify="center",
+    ).pack(expand=True)
+
+    win.after(seconds * 1000, win.destroy)
+    win.update()
+
+
+# ==========================================
+# Google広域検索（フォールバック専用）
+# ==========================================
+def run_google_broad(city, loading, status):
+    # 一時メッセージ表示
+    show_temp_message(
+        root,
+        "Google検索を実行します。\n"
+        "ロボット認証画面が表示された場合は\n"
+        "手動で解除してください。",
+        seconds=3,
+    )
+
+    # 🔑 ここが重要：3秒間 Tk のイベントを回す
+    root.update()
+    root.after(3000)  # ← 実際に3秒待つ
+    root.update()
+
+    status.config(text="Google広域検索中…")
+    loading.update()
+
+    records = []
+    try:
+        results = google_broad_search(city)
+        print(f"🌍 Google検索結果: {len(results or [])} 件")
+
+        for title, link in results or []:
+            if link.lower().endswith(".pdf"):
+                records.append(
+                    {
+                        "title": title or os.path.basename(link),
+                        "url": link,
+                        "source": "google_broad_direct",
+                        "depth": 0,
+                    }
+                )
+            else:
+                records.extend(find_pdfs_recursively(link, city, max_depth=3))
+
+    except Exception as e:
+        print(f"❌ Google検索失敗: {e}")
+
+    return records
 
 
 # ==========================================
@@ -56,43 +127,43 @@ def run_once():
 
     selection = select_municipality(root)
     if selection is None:
-        print("❌ キャンセルされました")
         return False
 
     url = selection.get("url")
     municipality = selection.get("municipality")
 
-    if not url:
-        messagebox.showerror("エラー", "URLが取得できませんでした")
-        return False
-
-    url = url.strip()
-    if not re.match(r"^https?://", url, re.IGNORECASE):
+    if not url or not re.match(r"^https?://", url):
         messagebox.showerror("エラー", "有効なURLではありません")
-        return False
+        return True
 
     city = municipality or detect_municipality_name(url)
-    print(f"\n🏙 自治体: {city}")
+
+    print("\n==============================")
+    print(f"🏙 自治体: {city}")
     print(f"🌐 URL: {url}")
 
-    # ----------------------------------
+    clear_pdf_files()
+
     # 検索中ウィンドウ
-    # ----------------------------------
-    loading_win = tk.Toplevel(root)
-    loading_win.title("実行中")
-    loading_win.geometry("600x180+800+150")
-    loading_win.attributes("-topmost", True)
+    loading = tk.Toplevel(root)
+    loading.title("検索中")
+    loading.geometry("600x220+800+150")
+    loading.attributes("-topmost", True)
 
-    Label(loading_win, text=f"{city}を検索", font=("MS Gothic", 14, "bold")).pack(
-        pady=(20, 5)
-    )
-    status_label = Label(loading_win, text="検索中…", font=("MS Gothic", 13))
-    status_label.pack(pady=10)
-    loading_win.update()
+    Label(
+        loading,
+        text=f"{city} を検索中",
+        font=("MS Gothic", 14, "bold"),
+    ).pack(pady=(20, 8))
 
-    # ----------------------------------
-    # 検索方式の決定
-    # ----------------------------------
+    status = Label(loading, text="準備中…", font=("MS Gothic", 12))
+    status.pack()
+
+    loading.update()
+
+    # ==================================
+    # 通常検索（自動）
+    # ==================================
     strategies = ["hierarchical_entry", "internal_search", "google_cse", "sitemap"]
     detected = detect_search_strategy_candidates(url)
     for s in detected:
@@ -100,120 +171,71 @@ def run_once():
             strategies.append(s)
 
     final_links = []
-    used_strategy = None
+    used = None
 
-    # ----------------------------------
-    # 検索方式ループ
-    # ----------------------------------
     for strategy in strategies:
-        if strategy == "google_broad":
-            continue
-
-        print(f"▶ 検索方式: {strategy}")
-        status_label.config(text=f"{strategy} で検索中…")
-        loading_win.update()
+        status.config(text=f"{strategy} で検索中…")
+        loading.update()
+        print(f"▶ {strategy}")
 
         func = SEARCH_FUNCS.get(strategy)
-        if not func:
-            continue
-
         try:
-            if strategy in ("google_cse", "internal_search"):
-                result = func(start_url=url, max_pages=MAX_PAGES)
-            else:
-                result = func(start_url=url)
+            result = (
+                func(start_url=url, max_pages=MAX_PAGES)
+                if strategy in ("google_cse", "internal_search")
+                else func(start_url=url)
+            )
 
             if not result:
-                print(f"⚠ {strategy} 結果なし → 次へ")
                 continue
 
-            # --- リンク抽出 ---
-            if strategy in ("topical_entry", "hierarchical_entry", "sitemap"):
-                current_links = [(u, u) for u in result]
-            else:
-                current_links = extract_links(result)
+            links = (
+                [(u, u) for u in result]
+                if strategy in ("topical_entry", "hierarchical_entry", "sitemap")
+                else extract_links(result)
+            )
 
-            if not current_links:
-                print(f"⚠ {strategy} リンク0件 → 次へ")
-                continue
-
-            # --- PDFが実在するか軽く確認 ---
-            test_records = []
-            for _, test_link in current_links[:3]:
-                try:
-                    depth = 1 if test_link.lower().endswith(".pdf") else 2
-                    found = find_pdfs_recursively(
-                        start_url=test_link, city=city, max_depth=depth
+            test = []
+            for _, link in links[:3]:
+                test.extend(
+                    find_pdfs_recursively(
+                        start_url=link,
+                        city=city,
+                        max_depth=1 if link.endswith(".pdf") else 2,
                     )
-                    test_records.extend(found)
-                except Exception:
-                    pass
+                )
 
-            if test_records:
-                final_links = current_links
-                used_strategy = strategy
-                print(f"✅ {strategy} でPDF確認")
+            if test:
+                final_links = links
+                used = strategy
                 break
-            else:
-                print(f"⚠ {strategy} PDF 0件 → 次の検索方式へ")
 
         except Exception as e:
             print(f"⚠ {strategy} エラー: {e}")
-            wait_for_manual_robot_action(strategy)
 
-    # ----------------------------------
-    # 検索失敗
-    # ----------------------------------
-    if not used_strategy:
-        loading_win.destroy()
-        messagebox.showerror("エラー", "有効な検索方式が見つかりませんでした")
-        return True
-
-    # ----------------------------------
-    # リンク保存
-    # ----------------------------------
-    save_links_csv(final_links, LINKS_CSV)
-
-    # ----------------------------------
-    # 本格PDF探索
-    # ----------------------------------
+    # ==================================
+    # フォールバック：Google広域検索
+    # ==================================
     records = []
-    for title, link in final_links:
-        try:
-            depth = 1 if link.lower().endswith(".pdf") else 4
-            records.extend(find_pdfs_recursively(link, city, max_depth=depth))
-        except Exception:
-            pass
 
-    # ----------------------------------
-    # PDF 0件 → Google広域検索
-    # ----------------------------------
-    if not records:
-        try:
-            broad_results = google_broad_search(city)
-            for title, link in broad_results or []:
-                if link.lower().endswith(".pdf"):
-                    records.append(
-                        {
-                            "title": title or os.path.basename(link),
-                            "url": link,
-                            "source": "google_broad_direct",
-                            "depth": 0,
-                        }
-                    )
-                else:
-                    records.extend(find_pdfs_recursively(link, city, max_depth=3))
-        except Exception as e:
-            print(f"⚠ Google広域検索エラー: {e}")
+    if not used:
+        print("⚠ 通常検索失敗 → Google広域検索へ")
+        records = run_google_broad(city, loading, status)
+    else:
+        save_links_csv(final_links, LINKS_CSV)
+        status.config(text="PDF探索中…")
+        loading.update()
 
-    loading_win.destroy()
+        for _, link in final_links:
+            records.extend(find_pdfs_recursively(link, city, max_depth=4))
+
+        if not records:
+            records = run_google_broad(city, loading, status)
+
+    loading.destroy()
 
     if not records:
-        messagebox.showwarning(
-            "警告",
-            "関連するPDFが見つかりませんでした。\n"
-            "（自治体未公開・構造差異の可能性）",
-        )
+        messagebox.showwarning("もう一度、右側のgPDFが見つかりませんでした")
         return True
 
     save_results(records)
@@ -232,7 +254,6 @@ def main():
     while True:
         if not run_once():
             break
-
         if not messagebox.askyesno("完了", "別の自治体を続けて検索しますか？"):
             break
 

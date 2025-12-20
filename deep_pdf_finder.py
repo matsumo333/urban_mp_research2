@@ -10,27 +10,13 @@ KEYWORDS = ["都市", "マス"]
 PDF_DIR = "output/pdfs"
 
 
-# =========================================
-# PDFファイルだけ削除（フォルダは残す）
-# =========================================
-def clear_pdf_files():
-    if not os.path.exists(PDF_DIR):
-        return
-
-    for filename in os.listdir(PDF_DIR):
-        if filename.lower().endswith(".pdf"):
-            try:
-                os.remove(os.path.join(PDF_DIR, filename))
-            except Exception as e:
-                print(f"⚠️ 削除失敗: {filename} ({e})")
-
 
 # =========================================
 # PDF探索・保存メイン関数
 # =========================================
 def find_pdfs_recursively(start_url, city, max_depth=4):
     # ★ 実行時に過去PDFを全削除（②方式）
-    clear_pdf_files()
+  
 
     visited = set()
     results = []

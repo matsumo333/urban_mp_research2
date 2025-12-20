@@ -22,10 +22,14 @@ def select_municipality(parent):
 
     dialog = tk.Toplevel(parent)
     dialog.title("自治体選択")
-    dialog.geometry("620x420")
+    dialog.geometry("640x460")
     dialog.grab_set()
 
-    result = {"url": None, "municipality": None}
+    result = {
+        "url": None,
+        "municipality": None,
+        "search_mode": "auto",  # ★追加
+    }
 
     # -------------------------
     # 都道府県
@@ -50,9 +54,12 @@ def select_municipality(parent):
     pref_combo.bind("<<ComboboxSelected>>", on_pref_selected)
 
     # -------------------------
-    # 決定
+    # ボタン
     # -------------------------
-    def decide():
+    btn_frame = tk.Frame(dialog)
+    btn_frame.pack(pady=18)
+
+    def decide(mode):
         pref = pref_combo.get()
         muni = muni_combo.get()
 
@@ -64,10 +71,23 @@ def select_municipality(parent):
             if row["municipality"] == muni:
                 result["url"] = row["url"]
                 result["municipality"] = muni
+                result["search_mode"] = mode
                 dialog.destroy()
                 return
 
-    ttk.Button(dialog, text="決 定", command=decide).pack(pady=16)
+    ttk.Button(
+        btn_frame,
+        text="検索（方法自動選択）",
+        width=22,
+        command=lambda: decide("auto"),
+    ).pack(side="left", padx=10)
+
+    ttk.Button(
+        btn_frame,
+        text="Google検索",
+        width=22,
+        command=lambda: decide("google"),
+    ).pack(side="left", padx=10)
 
     parent.wait_window(dialog)
     return result

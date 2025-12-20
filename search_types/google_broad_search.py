@@ -27,7 +27,7 @@ def save_links_to_csv(links):
     output_dir = os.path.dirname(LINKS_CSV_PATH)
     if output_dir:
         os.makedirs(output_dir, exist_ok=True)
-    
+
     with open(LINKS_CSV_PATH, "w", encoding="utf-8-sig", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(["title", "url"])  # ヘッダー
@@ -64,7 +64,7 @@ def search(city_name: str) -> list[tuple[str, str]]:
         print("   30秒後に自動で結果を収集します...\n")
 
         driver.get(search_url)
-        time.sleep(6000)  # 手動対応用待機
+        time.sleep(30)  # 手動対応用待機
 
         print("🔄 検索結果を解析中...")
 
@@ -72,7 +72,10 @@ def search(city_name: str) -> list[tuple[str, str]]:
             href = a.get_attribute("href")
             if not href:
                 continue
-            if any(x in href for x in ["google.com", "youtube.com", "policies", "preferences"]):
+            if any(
+                x in href
+                for x in ["google.com", "youtube.com", "policies", "preferences"]
+            ):
                 continue
             if href.startswith(("javascript:", "data:")):
                 continue
@@ -114,7 +117,9 @@ def search(city_name: str) -> list[tuple[str, str]]:
 # ================================
 if __name__ == "__main__":
     print("=== Google広域検索ツール ===\n")
-    city = input("自治体名を入力してください（例: 四日市市、横浜市、東京都中央区）: ").strip()
+    city = input(
+        "自治体名を入力してください（例: 四日市市、横浜市、東京都中央区）: "
+    ).strip()
     if city:
         links = search(city)
         if links:
@@ -124,4 +129,3 @@ if __name__ == "__main__":
                 print(f"   {url}\n")
     else:
         print("入力がありませんでした。")
-        
