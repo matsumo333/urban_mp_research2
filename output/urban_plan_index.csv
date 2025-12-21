@@ -1,18 +1,7 @@
-﻿city,title,type,url,local_path,source,depth,status
-大垣市,【概要版】大垣市都市計画マスタープラン,PDF,https://www.city.ogaki.lg.jp/cmsfiles/contents/0000053/53056/gaiyoR3.pdf,output/pdfs\大垣市_gaiyoR3.pdf,https://www.city.ogaki.lg.jp/0000053056.html,0,SKIP_EXISTS
-大垣市,表紙・目次,PDF,https://www.city.ogaki.lg.jp/cmsfiles/contents/0000053/53056/00hyousimokuziR3.pdf,output/pdfs\大垣市_00hyousimokuziR3.pdf,https://www.city.ogaki.lg.jp/0000053056.html,0,SKIP_EXISTS
-大垣市,【第1章】計画の大綱,PDF,https://www.city.ogaki.lg.jp/cmsfiles/contents/0000053/53056/01daiichiR3.pdf,output/pdfs\大垣市_01daiichiR3.pdf,https://www.city.ogaki.lg.jp/0000053056.html,0,SKIP_EXISTS
-大垣市,【第2章】計画区域の特徴と都市づくりの主要課題,PDF,https://www.city.ogaki.lg.jp/cmsfiles/contents/0000053/53056/02dainiR3.pdf,output/pdfs\大垣市_02dainiR3.pdf,https://www.city.ogaki.lg.jp/0000053056.html,0,SKIP_EXISTS
-大垣市,【第3章】全体構想,PDF,https://www.city.ogaki.lg.jp/cmsfiles/contents/0000053/53056/03daisanR3.pdf,output/pdfs\大垣市_03daisanR3.pdf,https://www.city.ogaki.lg.jp/0000053056.html,0,SKIP_EXISTS
-大垣市,【第4章】地域別構想,PDF,https://www.city.ogaki.lg.jp/cmsfiles/contents/0000053/53056/04daiyonR3.pdf,output/pdfs\大垣市_04daiyonR3.pdf,https://www.city.ogaki.lg.jp/0000053056.html,0,SKIP_EXISTS
-大垣市,用語解説,PDF,https://www.city.ogaki.lg.jp/cmsfiles/contents/0000053/53056/05yougokaisetuR3.pdf,output/pdfs\大垣市_05yougokaisetuR3.pdf,https://www.city.ogaki.lg.jp/0000053056.html,0,SKIP_EXISTS
-大垣市,大垣都市計画区域マスタープラン（本文）,PDF,https://www.city.ogaki.lg.jp/cmsfiles/contents/0000002/2344/R3KMP.pdf,output/pdfs\大垣市_R3KMP.pdf,https://www.city.ogaki.lg.jp/0000002344.html,2,SKIP_EXISTS
-大垣市,大垣都市計画区域マスタープラン（総括図）,PDF,https://www.city.ogaki.lg.jp/cmsfiles/contents/0000002/2344/R3KMPsoukatuzu.pdf,output/pdfs\大垣市_R3KMPsoukatuzu.pdf,https://www.city.ogaki.lg.jp/0000002344.html,2,SKIP_EXISTS
-大垣市,土地区画整理事業一覧,PDF,https://www.city.ogaki.lg.jp/cmsfiles/contents/0000002/2344/tochikukakuseirijigyou-ichiran.pdf,output/pdfs\大垣市_tochikukakuseirijigyou-ichiran.pdf,https://www.city.ogaki.lg.jp/0000002344.html,2,SKIP_EXISTS
-大垣市,資料（令和6年4月26日付け）,PDF,https://www.city.ogaki.lg.jp/cmsfiles/contents/0000002/2889/toshikeikakuzyouhounotuika.pdf,output/pdfs\大垣市_toshikeikakuzyouhounotuika.pdf,https://www.city.ogaki.lg.jp/0000002889.html,3,SKIP_EXISTS
-大垣市,"【大垣・墨俣】15,000分の1の総括図 (ファイルサイズ：6.93MB)",PDF,https://www.city.ogaki.lg.jp/cmsfiles/contents/0000002/2889/soukatsuzu_15000.pdf,output/pdfs\大垣市_soukatsuzu_15000.pdf,https://www.city.ogaki.lg.jp/0000002889.html,3,SKIP_EXISTS
-大垣市,"【墨俣】10,000分の1総括図 (ファイルサイズ：3.48MB)",PDF,https://www.city.ogaki.lg.jp/cmsfiles/contents/0000002/2889/soukatsuzu(sunomata)_10000.pdf,output/pdfs\大垣市_soukatsuzu(sunomata)_10000.pdf,https://www.city.ogaki.lg.jp/0000002889.html,3,SKIP_EXISTS
-大垣市,"縮尺2,500分の1索引図 (ファイル名:索引図.pdf  サイズ:3.11 MB)",PDF,https://www.city.ogaki.lg.jp/cmsfiles/contents/0000002/2306/H25sakuin.pdf,output/pdfs\大垣市_H25sakuin.pdf,https://www.city.ogaki.lg.jp/0000002306.html,4,SKIP_EXISTS
-大垣市,(ファイル名：minaoshi.pdf  サイズ：9.49MB),PDF,https://www.city.ogaki.lg.jp/cmsfiles/contents/0000034/34889/minaoshi.pdf,output/pdfs\大垣市_minaoshi.pdf,https://www.city.ogaki.lg.jp/0000034889.html,4,SKIP_EXISTS
-大垣市,(ファイル名：kekka.pdf  サイズ：4.55MB),PDF,https://www.city.ogaki.lg.jp/cmsfiles/contents/0000034/34889/kekka.pdf,output/pdfs\大垣市_kekka.pdf,https://www.city.ogaki.lg.jp/0000034889.html,4,SKIP_EXISTS
-大垣市,国土交通省 都市再生推進法人について(外部リンク)（別ウインドウで開く）,PDF,https://www.mlit.go.jp/toshi/pdf/toshisaisei/toshisaisei_shousai.pdf,output/pdfs\大垣市_toshisaisei_shousai.pdf,https://www.city.ogaki.lg.jp/0000061772.html,3,OK
+﻿title,url,source,depth
+"京都市都市計画マスタープランの策定及び区の権限強化 ...
+京都弁護士会
+https://www.kyotoben.or.jp › files › 2022.8.25 ...",https://www.kyotoben.or.jp/files/2022.8.25%20%E4%BA%AC%E9%83%BD%E5%B8%82%20%E9%83%BD%E5%B8%82%E8%A8%88%E7%94%BB%E3%83%9E%E3%82%B9%E3%82%BF%E3%83%BC%E3%83%97%E3%83%A9%E3%83%B3%E6%84%8F%E8%A6%8B%E6%9B%B81.pdf,google_broad,0
+都市計画マスタープラン,https://www.city.chitose.lg.jp/_resources/content/29892/20130307-164843.pdf,google_broad,0
+都市計画マスタープラン,https://www.city.chitose.lg.jp/_resources/content/29892/20130307-164843.pdf,google_broad,0
+都市計画マスタープラン,https://www2.city.kyoto.lg.jp/sogo/toukei/Publish/Analysis/Topics/200910-01.pdf,google_broad,0

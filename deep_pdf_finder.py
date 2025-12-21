@@ -2,22 +2,31 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse, unquote
 import os
+import sys
+
 
 # =========================================
-# 設定
+# 実行ディレクトリ取得（exe / py 両対応）
 # =========================================
+def get_base_dir():
+    if getattr(sys, "frozen", False):
+        # exe のある場所
+        return os.path.dirname(sys.executable)
+    else:
+        # python 実行時のファイル位置
+        return os.path.dirname(os.path.abspath(__file__))
+
+
+BASE_DIR = get_base_dir()
+PDF_DIR = os.path.join(BASE_DIR, "output", "pdfs")
+
 KEYWORDS = ["都市", "マス"]
-PDF_DIR = "output/pdfs"
-
 
 
 # =========================================
 # PDF探索・保存メイン関数
 # =========================================
 def find_pdfs_recursively(start_url, city, max_depth=4):
-    # ★ 実行時に過去PDFを全削除（②方式）
-  
-
     visited = set()
     results = []
 
@@ -41,8 +50,7 @@ def find_pdfs_recursively(start_url, city, max_depth=4):
             r = requests.get(pdf_url, timeout=30, stream=True)
             r.raise_for_status()
 
-            content_type = r.headers.get("Content-Type", "").lower()
-            if "application/pdf" not in content_type:
+            if "application/pdf" not in r.headers.get("Content-Type", "").lower():
                 return None, "NOT_A_PDF_CONTENT"
 
             with open(save_path, "wb") as f:
@@ -60,9 +68,7 @@ def find_pdfs_recursively(start_url, city, max_depth=4):
     # 再帰クロール
     # -------------------------------------
     def crawl(url, depth):
-        if depth > max_depth:
-            return
-        if url in visited:
+        if depth > max_depth or url in visited:
             return
 
         visited.add(url)
@@ -77,23 +83,18 @@ def find_pdfs_recursively(start_url, city, max_depth=4):
 
         soup = BeautifulSoup(r.text, "html.parser")
 
-        # ① PDFリンク探索
+        # PDF探索
         for a in soup.select("a[href*='.pdf']"):
-            href = a.get("href")
-            if not href:
-                continue
-
+            pdf_url = urljoin(url, a.get("href"))
             title = a.get_text(strip=True)
-            pdf_url = urljoin(url, href)
 
             local_path, status = download_pdf(pdf_url)
-
             print(f"  {'✅' if status == 'OK' else '⚠️'} {status}: {pdf_url}")
 
             results.append(
                 {
                     "city": city,
-                    "title": title if title else "PDF（名称不明）",
+                    "title": title or "PDF（名称不明）",
                     "type": "PDF",
                     "url": pdf_url,
                     "local_path": local_path or "",
@@ -103,24 +104,21 @@ def find_pdfs_recursively(start_url, city, max_depth=4):
                 }
             )
 
-        # ② 次のHTMLリンク探索
+        # 次のHTML探索
         for a in soup.select("a[href]"):
-            text = a.get_text(separator="", strip=True)
+            text = a.get_text(strip=True)
             href = a.get("href")
 
             if not text or not href:
                 continue
-
             if not any(k in text for k in KEYWORDS):
                 continue
 
             next_url = urljoin(url, href)
-
             if urlparse(next_url).netloc != urlparse(start_url).netloc:
                 continue
 
             crawl(next_url, depth + 1)
 
-    # 実行
     crawl(start_url, 0)
     return results

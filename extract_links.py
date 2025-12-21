@@ -1,41 +1,42 @@
 # link_extractor.py
 
-import csv
-import os
 from bs4 import BeautifulSoup
+from urllib.parse import urljoin
 
 
-def extract_links(html: str):
+PDF_HINT_WORDS = [
+    "都市計画",
+    "マスタープラン",
+    "master",
+    "plan",
+]
+
+
+def extract_links(html: str, base_url: str = ""):
     soup = BeautifulSoup(html, "html.parser")
-    links = []
+    results = []
 
-    for a in soup.select("a"):
-        title = a.get_text(strip=True)
-        url = a.get("href")
-        if not title or not url:
+    for a in soup.find_all("a", href=True):
+        href = a["href"].strip()
+        text = a.get_text(strip=True)
+
+        full_url = urljoin(base_url, href)
+
+        # PDF直リンク
+        if full_url.lower().endswith(".pdf"):
+            results.append((text or full_url, full_url))
             continue
-        if "都市計画" in title or "マスタープラン" in title:
-            links.append((title, url))
-    return links
 
+        # PDFらしいリンク（中間ページ）
+        if any(w in (text + full_url).lower() for w in PDF_HINT_WORDS):
+            results.append((text or full_url, full_url))
 
-def save_links_csv(links, csv_path):
-    os.makedirs(os.path.dirname(csv_path), exist_ok=True)
-    with open(csv_path, "w", newline="", encoding="utf-8-sig") as f:
-        writer = csv.writer(f)
-        writer.writerow(["title", "url"])
-        writer.writerows(links)
-    print(f"💾 中間CSV保存: {csv_path}")
+    # 重複除去（順序保持）
+    seen = set()
+    uniq = []
+    for t, u in results:
+        if u not in seen:
+            uniq.append((t, u))
+            seen.add(u)
 
-
-def load_links_csv(csv_path):
-    with open(csv_path, encoding="utf-8-sig") as f:
-        return [(r["title"], r["url"]) for r in csv.DictReader(f)]
-
-
-
-
-
-
-
-
+    return uniq

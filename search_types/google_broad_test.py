@@ -54,9 +54,9 @@ def search(city_name: str):
         encoded = urllib.parse.quote(query)
         search_url = f"https://www.google.com/search?q={encoded}&num=30"
 
-        print(f"\n🔍 人間らしいGoogle検索開始: {city_name}")
-        print("   Googleが開きます。ロボット認証が出たら手動で解除してください")
-        print("   30秒後に自動で結果を収集します...\n")
+        # print(f"\n🔍 人間らしいGoogle検索開始: {city_name}")
+        # print("   Googleが開きます。ロボット認証が出たら手動で解除してください")
+        # print("   30秒後に自動で結果を収集します...\n")
 
         driver.get(search_url)
         time.sleep(30)  # 手動対応時間

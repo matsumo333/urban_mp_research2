@@ -1,13 +1,29 @@
 import csv
 import os
+import sys
 import tkinter as tk
 from tkinter import ttk, messagebox
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# =========================================
+# BASE_DIR（通常実行 / PyInstaller 両対応）
+# =========================================
+if getattr(sys, "frozen", False):
+    # PyInstaller onefile 実行時
+    BASE_DIR = sys._MEIPASS
+else:
+    # 通常の python 実行時
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 CSV_FILE = os.path.join(BASE_DIR, "municipalities.csv")
 
 
+# =========================================
+# CSV 読み込み
+# =========================================
 def load_data():
+    if not os.path.exists(CSV_FILE):
+        raise FileNotFoundError(f"municipalities.csv が見つかりません: {CSV_FILE}")
+
     data = {}
     with open(CSV_FILE, encoding="utf-8-sig") as f:
         reader = csv.DictReader(f)
@@ -17,8 +33,15 @@ def load_data():
     return data
 
 
+# =========================================
+# 自治体選択ダイアログ
+# =========================================
 def select_municipality(parent):
-    data = load_data()
+    try:
+        data = load_data()
+    except Exception as e:
+        messagebox.showerror("エラー", str(e))
+        return None
 
     dialog = tk.Toplevel(parent)
     dialog.title("自治体選択")
@@ -28,7 +51,7 @@ def select_municipality(parent):
     result = {
         "url": None,
         "municipality": None,
-        "search_mode": "auto",  # ★追加
+        "search_mode": "auto",
     }
 
     # -------------------------
